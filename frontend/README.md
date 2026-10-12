@@ -30,13 +30,14 @@ Live records are fetched from cases → proceedings → orders → payments. Fai
 - Maintenance: create/read receipts; demo ledger handles partial payments, overdue periods and unapplied credits. JSON case/ledger export.
 - Documents: upload/download via existing endpoints; demo files retained in memory; readiness by category.
 - Planning calculator: versioned scenarios and visible limitations. Live calculations use `/api/calculator/run`; demo mirrors its v1.0 formula.
+- Settlement & mediation: dual-pane offer comparison, negotiation sliders (monthly alimony, lump sum, asset share), agreement checklist with status toggles, and an MoU draft preview for advocate review. Session-only records; never sent to the other party.
 - Data workspace: editable legal-source and financial-fact records, provenance, review dates, known/estimated/unknown state, JSON handoff with annual-to-monthly normalization. This is session-only preparation, not a connected RAG pipeline.
 - Help: official NALSA/eCourts links, lawyer questions and safety/quick-exit explanation.
 - Settings and sign-in/registration.
 
 ## Important integration boundaries
 
-The repository backend does not currently support payment schedules, effective dates, due days, payment-period allocation, hearing events, document listing, source review or AI chat. Live mode does not fabricate these capabilities. It records supported order/payment fields and shows explicit unavailable states for reconciliation. Only documents uploaded during the current live session can be listed until a document-list endpoint is added; existing documents remain on the server.
+The repository backend does not currently support payment schedules, effective dates, due days, payment-period allocation, hearing events, document listing, source review, settlement offers or negotiation terms, or AI chat. Live mode does not fabricate these capabilities. Settlement and mediation records are session-only in both modes; only documents uploaded during the current live session can be listed until a document-list endpoint is added; existing documents remain on the server.
 
 The existing calculator accepts applicant liabilities but does not apply them in its formula. The UI exposes this limitation. Its 75%/125% scenario multipliers are budget assumptions, not legal percentages. Unknown values cannot be entered as known zero without deliberate user input. All entered expense categories should be mutually exclusive.
 

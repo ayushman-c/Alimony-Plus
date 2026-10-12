@@ -27,6 +27,8 @@ const empty = (): Workspace => ({
   hearings: [],
   documents: [],
   sources: [],
+  offers: [],
+  terms: [],
 });
 type Context = {
   data: Workspace;

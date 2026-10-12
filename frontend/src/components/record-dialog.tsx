@@ -5,7 +5,11 @@ import { useWorkspace } from "./workspace-provider";
 import { Field, Modal } from "./ui";
 import { api } from "@/lib/api";
 import { normalizeFinancial } from "@/lib/ledger";
-import type { DocumentRecord, SourceRecord } from "@/lib/types";
+import type {
+  DocumentRecord,
+  SettlementOffer,
+  SourceRecord,
+} from "@/lib/types";
 export type DialogKind =
   | "case"
   | "proceeding"
@@ -13,7 +17,9 @@ export type DialogKind =
   | "payment"
   | "hearing"
   | "document"
-  | "source";
+  | "source"
+  | "offer"
+  | "term";
 const titles = {
   case: "Start a case record",
   proceeding: "Add a proceeding",
@@ -22,6 +28,8 @@ const titles = {
   hearing: "Add an upcoming event",
   document: "Add a document",
   source: "Structure a source or fact",
+  offer: "Record a settlement offer",
+  term: "Add a negotiation term",
 };
 export function RecordDialog({
   kind,
@@ -41,7 +49,7 @@ export function RecordDialog({
   );
   const [certainty, setCertainty] = useState(source?.certainty || "Known");
   const noParent =
-    (["proceeding", "document", "hearing"].includes(kind) &&
+    (["proceeding", "document", "hearing", "offer", "term"].includes(kind) &&
       !data.cases.length) ||
     (kind === "order" && !data.proceedings.length) ||
     (kind === "payment" && !data.orders.length);
@@ -185,6 +193,68 @@ export function RecordDialog({
           "Structured record saved in this session. Export it for the AI team.",
         );
       }
+      if (kind === "offer") {
+        if (str("date") > asOf)
+          throw new Error("Offer date cannot be in the future.");
+        const monthlyAmount =
+          str("monthlyAmount") === "" ? null : num("monthlyAmount");
+        const lumpSum = str("lumpSum") === "" ? null : num("lumpSum");
+        const assetSplitPct =
+          str("assetSplitPct") === "" ? null : num("assetSplitPct");
+        if (
+          monthlyAmount === null &&
+          lumpSum === null &&
+          assetSplitPct === null
+        )
+          throw new Error(
+            "Record at least one term: monthly amount, lump sum, or asset share.",
+          );
+        if (
+          [monthlyAmount, lumpSum, assetSplitPct].some(
+            (v) => v !== null && v < 0,
+          )
+        )
+          throw new Error("Offered amounts cannot be negative.");
+        if (assetSplitPct !== null && assetSplitPct > 100)
+          throw new Error("Asset share must be between 0 and 100.");
+        setData((prev) => ({
+          ...prev,
+          offers: [
+            ...prev.offers,
+            {
+              id: Date.now(),
+              caseId: num("caseId"),
+              party: str("party") as SettlementOffer["party"],
+              date: str("date"),
+              channel: str("channel") as SettlementOffer["channel"],
+              monthlyAmount,
+              lumpSum,
+              assetSplitPct,
+              notes: str("notes"),
+            },
+          ],
+        }));
+        setNotice("Offer recorded in this session. It is not sent to anyone.");
+      }
+      if (kind === "term") {
+        if (!str("title")) throw new Error("Give the term a short title.");
+        setData((prev) => ({
+          ...prev,
+          terms: [
+            ...prev.terms,
+            {
+              id: Date.now(),
+              caseId: num("caseId"),
+              title: str("title"),
+              detail: str("detail"),
+              status: "pending",
+            },
+          ],
+        }));
+        setNotice(
+          "Term added as pending review. Update its status as discussions progress.",
+        );
+      }
       onClose();
     } catch (err) {
       setError((err as Error).message);
@@ -214,7 +284,9 @@ export function RecordDialog({
             before adding this record.
           </div>
         )}
-        {["proceeding", "hearing", "document"].includes(kind) && (
+        {["proceeding", "hearing", "document", "offer", "term"].includes(
+          kind,
+        ) && (
           <Field label="Case">
             <select
               name="caseId"
@@ -541,6 +613,86 @@ export function RecordDialog({
             <p className="callout">
               Review labels record a manual check; they do not constitute legal
               approval. Uploaded text is data, never an instruction to the AI.
+            </p>
+          </>
+        )}
+        {kind === "offer" && (
+          <>
+            <div className="form-grid">
+              <Field label="Party">
+                <select name="party" required defaultValue="applicant">
+                  <option value="applicant">Applicant (you)</option>
+                  <option value="respondent">Respondent</option>
+                </select>
+              </Field>
+              <Field label="Offer date">
+                <input
+                  name="date"
+                  type="date"
+                  max={asOf}
+                  defaultValue={asOf}
+                  required
+                />
+              </Field>
+            </div>
+            <Field
+              label="How was it communicated?"
+              hint="Record where this offer came from. Alimony+ never contacts the other party."
+            >
+              <select
+                name="channel"
+                required
+                defaultValue="Lawyer communication"
+              >
+                <option>Working position</option>
+                <option>Lawyer communication</option>
+                <option>Mediation session</option>
+                <option>Court-facilitated</option>
+              </select>
+            </Field>
+            <div className="form-grid">
+              <Field label="Monthly alimony (₹)">
+                <input name="monthlyAmount" type="number" min="0" step="500" />
+              </Field>
+              <Field label="Lump-sum settlement (₹)">
+                <input name="lumpSum" type="number" min="0" step="10000" />
+              </Field>
+            </div>
+            <Field
+              label="Asset share (%)"
+              hint="The applicant’s proposed share of marital assets (0–100). Leave blank if assets are not part of this offer."
+            >
+              <input
+                name="assetSplitPct"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+              />
+            </Field>
+            <Field label="Notes (optional)">
+              <textarea name="notes" rows={2} maxLength={500} />
+            </Field>
+            <p className="callout">
+              Leave a term blank when it is not part of the offer. A blank is
+              kept distinct from a known zero and is never read as agreement.
+            </p>
+          </>
+        )}
+        {kind === "term" && (
+          <>
+            <Field label="Term title" hint="e.g. Monthly maintenance amount">
+              <input name="title" required maxLength={120} />
+            </Field>
+            <Field
+              label="What is being discussed?"
+              hint="One or two lines. Figures can be added as the discussion develops."
+            >
+              <textarea name="detail" rows={3} maxLength={300} />
+            </Field>
+            <p className="callout">
+              New terms start as pending review. Status changes are your own
+              record of the discussion and are not shared with anyone.
             </p>
           </>
         )}

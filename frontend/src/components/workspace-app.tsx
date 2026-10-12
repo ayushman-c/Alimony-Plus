@@ -9,6 +9,7 @@ import {
   Wallet,
   Files,
   Calculator,
+  Handshake,
   Database,
   CircleHelp,
   Settings,
@@ -34,7 +35,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useWorkspace } from "./workspace-provider";
-import { Badge, Empty, PageHeading, ExternalLink } from "./ui";
+import { Badge, CaseSelector, Empty, PageHeading, ExternalLink } from "./ui";
 import { RecordDialog, type DialogKind } from "./record-dialog";
 import { buildLedger, dateLabel, downloadJson, money } from "@/lib/ledger";
 import type { LedgerRow, SourceRecord } from "@/lib/types";
@@ -45,6 +46,7 @@ import {
   LoginView,
   SettingsView,
 } from "./workspace-extras";
+import { SettlementView } from "./settlement-view";
 
 const nav = [
   { id: "dashboard", title: "Overview", icon: LayoutDashboard },
@@ -53,6 +55,7 @@ const nav = [
   { id: "payments", title: "Maintenance", icon: Wallet },
   { id: "documents", title: "Documents", icon: Files },
   { id: "calculator", title: "Planning calculator", icon: Calculator },
+  { id: "settlement", title: "Settlement & mediation", icon: Handshake },
 ];
 const pageTitles: Record<string, string> = {
   dashboard: "Overview",
@@ -61,6 +64,7 @@ const pageTitles: Record<string, string> = {
   payments: "Maintenance",
   documents: "Documents",
   calculator: "Planning calculator",
+  settlement: "Settlement & mediation",
   "data-review": "Data workspace",
   help: "Help & legal aid",
   settings: "Settings",
@@ -1183,6 +1187,12 @@ export function WorkspaceApp({ section }: { section: string }) {
             </>
           )}
           {section === "calculator" && <CalculatorView />}
+          {section === "settlement" && (
+            <SettlementView
+              onAddOffer={() => open("offer")}
+              onAddTerm={() => open("term")}
+            />
+          )}
           {section === "data-review" && (
             <DataReviewView
               onAdd={() => open("source")}
@@ -1227,32 +1237,6 @@ export function WorkspaceApp({ section }: { section: string }) {
         />
       )}
     </div>
-  );
-}
-function CaseSelector({
-  selected,
-  setSelected,
-}: {
-  selected: number;
-  setSelected: (id: number) => void;
-}) {
-  const { data } = useWorkspace();
-  return (
-    <label className="case-selector">
-      <FolderHeart size={15} />
-      <select
-        aria-label="Filter by case"
-        value={selected}
-        onChange={(e) => setSelected(Number(e.target.value))}
-      >
-        <option value={0}>All cases</option>
-        {data.cases.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.title}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 function ListToolbar({

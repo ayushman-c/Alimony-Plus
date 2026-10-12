@@ -29,6 +29,17 @@ Agree on server-owned entities before enabling the live monthly ledger:
 
 The demo currently assumes monthly obligations only, due day clamped to the last day of the month, no proration, no automatic credit carry-over, and overdue only after the due date. Effective dates after a month's due day skip that month. It is an illustrative prototype, not a substitute for interpreting the actual order.
 
+## Needed for durable settlement negotiation
+
+The settlement & mediation workspace records offers and checklist terms in the
+session only. Before making it durable, agree on server-owned entities:
+
+- Offer: id, caseId, party, date, channel (lawyer/mediation/court provenance), monthlyAmount, lumpSum, assetSplitPct (nullable — null means the term is not part of the offer, never zero), notes, author, supersedesOfferId.
+- Negotiation term: id, caseId, title, detail, status (agreed/disputed/pending), statusHistory with actor and timestamp. Status changes should be auditable, not silently overwritten.
+- MoU draft: versioned snapshot of agreed terms, generated text, case reference, reviewer identity, review status and expiry. A session draft is not an approved document.
+- Review workflow: role-scoped review endpoints; an exported draft is `eligibleForLegalRetrieval: false` until a qualified reviewer approves it.
+- Redaction checks before any export leaves the platform; no automated delivery of offers, drafts or messages to the opposing party.
+
 ## AI preparation export v1.0
 
 Each record includes title, kind, provenance/section, source URL, effective date, review date, manual status, original value, frequency and certainty. Financial exports include currency, normalized numericValue and normalizedFrequency. Unknown is JSON null; annual recurring values divide by 12; one-time values remain one-time. Original values remain available.

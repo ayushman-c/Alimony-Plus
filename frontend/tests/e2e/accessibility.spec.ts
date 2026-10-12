@@ -8,6 +8,7 @@ test("workspace pages meet automated WCAG A/AA checks", async ({ page }) => {
     "payments",
     "documents",
     "calculator",
+    "settlement",
     "data-review",
     "help",
     "settings",
@@ -24,9 +25,23 @@ test("record dialog has accessible labels and no contrast violations", async ({
   page,
 }) => {
   await page.goto("/payments");
-  await page.getByRole("button", { name: "Log payment", exact: true }).click();
+  await page.getByRole("button", { name: "Log payment" }).click();
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])
     .analyze();
   expect(result.violations).toEqual([]);
+});
+test("settlement workspace and offer dialog meet WCAG A/AA", async ({
+  page,
+}) => {
+  await page.goto("/settlement");
+  const result = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa"])
+    .analyze();
+  expect(result.violations).toEqual([]);
+  await page.getByRole("button", { name: "Record offer" }).click();
+  const dialogResult = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa"])
+    .analyze();
+  expect(dialogResult.violations).toEqual([]);
 });

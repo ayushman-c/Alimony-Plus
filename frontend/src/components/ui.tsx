@@ -8,7 +8,8 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { X, FolderOpen, ArrowUpRight } from "lucide-react";
+import { X, FolderOpen, ArrowUpRight, FolderHeart } from "lucide-react";
+import { useWorkspace } from "./workspace-provider";
 export function Badge({
   children,
   tone = "",
@@ -142,6 +143,32 @@ export function Field({
       {bind(children)}
       {hint && <small id={`${id}-hint`}>{hint}</small>}
     </div>
+  );
+}
+export function CaseSelector({
+  selected,
+  setSelected,
+}: {
+  selected: number;
+  setSelected: (id: number) => void;
+}) {
+  const { data } = useWorkspace();
+  return (
+    <label className="case-selector">
+      <FolderHeart size={15} />
+      <select
+        aria-label="Filter by case"
+        value={selected}
+        onChange={(e) => setSelected(Number(e.target.value))}
+      >
+        <option value={0}>All cases</option>
+        {data.cases.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.title}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 export function ExternalLink({

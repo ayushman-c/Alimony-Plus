@@ -95,6 +95,32 @@ test("synthetic file upload is session-only and downloadable", async ({
   ).not.toBeVisible();
 });
 
+test("custom negotiation terms are session-only", async ({ page }) => {
+  await page.goto("/settlement");
+  await page
+    .getByRole("button", { name: "Add term", exact: true })
+    .first()
+    .click();
+  await page.getByLabel("Term title").fill("Custody holiday schedule");
+  await page
+    .getByLabel("What is being discussed?")
+    .fill("Alternate school holidays, to be discussed with the mediator.");
+  await page.getByRole("button", { name: "Save record", exact: true }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  const row = page
+    .locator(".term-item")
+    .filter({ hasText: "Custody holiday schedule" });
+  await expect(row).toBeVisible();
+  await expect(row.getByRole("button", { name: "Agreed" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await page.reload();
+  await expect(
+    page.locator(".term-item").filter({ hasText: "Custody holiday schedule" }),
+  ).not.toBeVisible();
+});
+
 test("all mobile screens avoid page-level horizontal scrolling", async ({
   page,
 }) => {
@@ -105,6 +131,7 @@ test("all mobile screens avoid page-level horizontal scrolling", async ({
     "payments",
     "documents",
     "calculator",
+    "settlement",
     "data-review",
     "help",
     "settings",

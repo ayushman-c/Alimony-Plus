@@ -160,5 +160,68 @@ export function demoWorkspace(): Workspace {
         certainty: "Unknown",
       },
     ],
+    offers: [
+      {
+        id: 1,
+        caseId: 1,
+        party: "applicant",
+        date: "2026-09-28",
+        channel: "Lawyer communication",
+        monthlyAmount: 18000,
+        lumpSum: null,
+        assetSplitPct: 40,
+        notes: "Synthetic working position shared with counsel.",
+      },
+      {
+        id: 2,
+        caseId: 1,
+        party: "respondent",
+        date: "2026-10-02",
+        channel: "Mediation session",
+        monthlyAmount: 12000,
+        lumpSum: 500000,
+        assetSplitPct: 25,
+        notes:
+          "Synthetic counter-position recorded from the mediator’s summary.",
+      },
+    ],
+    terms: [
+      {
+        id: 1,
+        caseId: 1,
+        title: "Monthly maintenance amount",
+        detail:
+          "Applicant proposes ₹18,000 per month; respondent offers ₹12,000.",
+        status: "disputed",
+      },
+      {
+        id: 2,
+        caseId: 1,
+        title: "Lump-sum settlement",
+        detail: "Respondent offered ₹5,00,000 as a one-time settlement.",
+        status: "disputed",
+      },
+      {
+        id: 3,
+        caseId: 1,
+        title: "Division of marital assets",
+        detail: "Applicant proposed a 40% share; respondent proposed 25%.",
+        status: "pending",
+      },
+      {
+        id: 4,
+        caseId: 1,
+        title: "Children’s education and medical costs",
+        detail: "Shared equally, with receipts reviewed every quarter.",
+        status: "agreed",
+      },
+      {
+        id: 5,
+        caseId: 1,
+        title: "Payment mode and timing",
+        detail: "Bank transfer by the 5th of each month.",
+        status: "agreed",
+      },
+    ],
   };
 }

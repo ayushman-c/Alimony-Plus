@@ -65,6 +65,29 @@ export type SourceRecord = {
   frequency: "Monthly" | "Annual" | "One-time" | "Not applicable";
   certainty: "Known" | "Estimated" | "Unknown";
 };
+export type SettlementOffer = {
+  id: number;
+  caseId: number;
+  party: "applicant" | "respondent";
+  date: string;
+  channel:
+    | "Working position"
+    | "Lawyer communication"
+    | "Mediation session"
+    | "Court-facilitated";
+  monthlyAmount: number | null;
+  lumpSum: number | null;
+  assetSplitPct: number | null;
+  notes?: string;
+};
+export type ChecklistStatus = "agreed" | "disputed" | "pending";
+export type SettlementTerm = {
+  id: number;
+  caseId: number;
+  title: string;
+  detail: string;
+  status: ChecklistStatus;
+};
 export type Workspace = {
   cases: CaseRecord[];
   proceedings: Proceeding[];
@@ -73,6 +96,8 @@ export type Workspace = {
   hearings: Hearing[];
   documents: DocumentRecord[];
   sources: SourceRecord[];
+  offers: SettlementOffer[];
+  terms: SettlementTerm[];
 };
 export type LedgerRow = {
   orderId: number;

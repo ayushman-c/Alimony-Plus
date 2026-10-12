@@ -19,6 +19,7 @@ test("dashboard renders and all workspace routes are usable", async ({
     "payments",
     "documents",
     "calculator",
+    "settlement",
     "data-review",
     "help",
     "settings",
@@ -28,6 +29,67 @@ test("dashboard renders and all workspace routes are usable", async ({
   }
   expect(errors).toEqual([]);
 });
+test("settlement sliders save a position and the MoU draft follows the checklist", async ({
+  page,
+}) => {
+  await page.goto("/settlement");
+  await expect(
+    page.getByRole("heading", { name: "Compare, adjust, and prepare." }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".pane-applicant").getByText("₹18,000", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".pane-respondent").getByText("₹12,000", { exact: true }),
+  ).toBeVisible();
+  const monthly = page.getByLabel("Monthly alimony (₹)");
+  await monthly.focus();
+  for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");
+  await expect(monthly).toHaveValue("20000");
+  await expect(page.getByText("₹20,000 / month")).toBeVisible();
+  await expect(
+    page.getByText("₹8,000 from the respondent’s offer"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Save my position" }).click();
+  await expect(
+    page.getByText("Your working position is saved in this session."),
+  ).toBeVisible();
+  await expect(
+    page.locator(".pane-applicant").getByText("₹20,000", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".delta-summary").getByText("₹8,000 apart"),
+  ).toBeVisible();
+  await page
+    .locator(".term-item")
+    .filter({ hasText: "Monthly maintenance amount" })
+    .getByRole("button", { name: "Agreed" })
+    .click();
+  await expect(page.locator(".mou-clauses")).toContainText(
+    "Monthly maintenance amount",
+  );
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.getByRole("button", { name: "Copy draft" }).click();
+  await expect(page.getByText(/Draft copied/i)).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
+    "Memorandum of Understanding",
+  );
+  await page.getByRole("button", { name: "Export MoU" }).click();
+  const pending = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export draft", exact: true }).click();
+  const download = await pending;
+  expect(download.suggestedFilename()).toBe("alimony-plus-settlement-mou.json");
+  const stream = await download.createReadStream();
+  let text = "";
+  for await (const chunk of stream!) text += chunk.toString();
+  const json = JSON.parse(text);
+  expect(json.agreedTerms.map((t: { title: string }) => t.title)).toContain(
+    "Monthly maintenance amount",
+  );
+  expect(json.synthetic).toBe(true);
+  expect(json.limitations.length).toBeGreaterThan(0);
+});
+
 test("logging a partial payment changes the ledger and demo reset restores it", async ({
   page,
 }) => {
